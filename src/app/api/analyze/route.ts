@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// 🔥 關鍵魔法：強制 Next.js 每次都重新運算，絕對不要拿舊的快取資料敷衍我們！
+// 魔法指令：強制 Next.js 每次都重新執行，不准快取！ // 強制更新測試用註解
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
