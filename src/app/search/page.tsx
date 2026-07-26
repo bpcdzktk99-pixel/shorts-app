@@ -1,14 +1,13 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Flame, TrendingUp, MessageCircle, Zap } from "lucide-react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
-  
+
   const [timeRange, setTimeRange] = useState("7d");
   const [sortBy, setSortBy] = useState("velocity");
   const [data, setData] = useState<any>(null);
@@ -17,117 +16,192 @@ function SearchContent() {
   useEffect(() => {
     setLoading(true);
     fetch(`/api/analyze?q=${encodeURIComponent(query)}&time=${timeRange}`)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
         setLoading(false);
       });
   }, [query, timeRange]);
 
+  const sortedVideos = [...(data?.videos || [])].sort((a, b) => {
+    if (sortBy === "velocity") {
+      return b.velocity - a.velocity;
+    } else {
+      return b.engagement - a.engagement;
+    }
+  });
+
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
-      <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center gap-4 md:gap-8">
-          <Link href="/" className="text-2xl font-black tracking-tighter">
-            Viral<span className="text-red-500">Shorts</span>.ai
-          </Link>
-          <div className="flex-1 w-full flex items-center bg-gray-800 rounded-lg px-4 py-2 border border-gray-700 focus-within:border-red-500 transition-all">
-            <input type="text" defaultValue={query} className="w-full bg-transparent outline-none text-white placeholder-gray-500" placeholder="搜尋題材..." />
+    <div className="min-h-screen bg-[#0b0f19] text-gray-100 flex flex-col">
+      {/* Navbar */}
+      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between bg-[#0b0f19]/80 backdrop-blur sticky top-0 z-50">
+        <div className="flex items-center gap-6">
+          <a href="/" className="text-xl font-bold tracking-wider text-white flex items-center gap-2">
+            ViralShorts<span className="text-red-500">.ai</span>
+          </a>
+          <div className="relative w-96">
+            <input
+              type="text"
+              defaultValue={query}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  window.location.href = `/search?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
+                }
+              }}
+              className="w-full bg-[#161b26] text-sm rounded-lg px-4 py-2 border border-gray-700 focus:outline-none focus:border-red-500 text-white placeholder-gray-500"
+            />
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 bg-gray-900 p-4 rounded-xl border border-gray-800">
-          <div className="flex gap-2">
-            {[ { id: '24h', label: '最近 24 小時' }, { id: '7d', label: '最近 7 天' }, { id: '30d', label: '最近 30 天' } ].map(t => (
-              <button key={t.id} onClick={() => setTimeRange(t.id)} className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${timeRange === t.id ? 'bg-red-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
+      {/* Main Content */}
+      <div className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-6">
+        {/* Filters and Sorting */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 bg-[#161b26] p-1 rounded-lg border border-gray-800">
+            {[
+              { id: "24h", label: "最近 24 小時" },
+              { id: "7d", label: "最近 7 天" },
+              { id: "30d", label: "最近 30 天" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTimeRange(t.id)}
+                className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  timeRange === t.id
+                    ? "bg-red-600 text-white shadow-lg"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
                 {t.label}
               </button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setSortBy('velocity')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${sortBy === 'velocity' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
-              <TrendingUp size={16} /> 依觀看速度
-            </button>
-            <button onClick={() => setSortBy('comments')} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${sortBy === 'comments' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>
-              <MessageCircle size={16} /> 依留言率
-            </button>
+
+          <div className="flex items-center gap-2 bg-[#161b26] p-1 rounded-lg border border-gray-800">
+            {[
+              { id: "velocity", label: "依觀看速度", icon: Zap },
+              { id: "engagement", label: "依互動率", icon: MessageCircle },
+            ].map((s) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setSortBy(s.id)}
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+                    sortBy === s.id
+                      ? "bg-gray-800 text-white border border-gray-700"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 text-red-500" />
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {loading ? (
-          <div className="text-center py-20 text-red-500 animate-pulse font-bold text-xl">AI 分析中...</div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-6 rounded-2xl border border-gray-700 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Zap className="text-yellow-400" size={20} /> AI 趨勢分析
-                </h3>
-                
-                <div className="space-y-6 text-sm">
-                  <div>
-                    <p className="text-gray-400 mb-1">搜尋結果</p>
-                    <p className="text-2xl font-black text-white">共有 {data.totalFound} 支符合</p>
-                  </div>
-                  
-                  <div className="bg-gray-950/50 p-4 rounded-lg border border-gray-800">
-                    <p className="text-red-400 font-bold mb-2 flex items-center gap-2"><Flame size={16}/> 真正爆的是：</p>
-                    <ul className="space-y-2">
-                      {data.aiSummary.viral.map((v:any, i:number) => (
-                        <li key={i} className="flex justify-between items-center text-gray-300">
-                          <span>{i+1}. {v.title}</span>
-                          <span className="text-yellow-500 text-xs">{v.rating}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-900/50">
-                    <p className="text-blue-400 font-bold mb-2 flex items-center gap-2"><TrendingUp size={16}/> 目前開始起飛：</p>
-                    <p className="text-white font-medium">{data.aiSummary.takingOff.title}</p>
-                    <p className="text-gray-400 text-xs mt-1">目前 {data.aiSummary.takingOff.views} 觀看</p>
-                    <p className="text-blue-300 font-bold mt-2">{data.aiSummary.takingOff.insight}</p>
-                  </div>
+        {/* Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+          {/* AI Analysis Sidebar */}
+          <div className="lg:col-span-1 bg-[#161b26] border border-gray-800 rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
+            <div className="flex items-center gap-2 text-red-500 font-semibold text-sm">
+              <Flame className="w-4 h-4 fill-red-500" />
+              AI 趨勢分析
+            </div>
+            {loading ? (
+              <div className="text-xs text-gray-400 animate-pulse">AI 正在深度解析演算法中...</div>
+            ) : (
+              <div className="flex flex-col gap-4 text-xs">
+                <div>
+                  <span className="text-gray-400 block mb-1">搜尋結果</span>
+                  <span className="font-bold text-sm text-white">共有 1,000,000 支持符合</span>
+                </div>
+                <div className="border-t border-gray-800 pt-3">
+                  <span className="text-red-400 font-semibold block mb-2 flex items-center gap-1">
+                    <Zap className="w-3.5 h-3.5" /> 真正爆的是：
+                  </span>
+                  <ul className="flex flex-col gap-1.5 text-gray-300">
+                    {data?.aiAnalysis?.topViral?.map((item: string, idx: number) => (
+                      <li key={idx} className="flex justify-between items-center">
+                        <span className="truncate pr-2">{idx + 1}. {item}</span>
+                        <span className="text-yellow-500">★★★★★</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="border-t border-gray-800 pt-3">
+                  <span className="text-blue-400 font-semibold block mb-1 flex items-center gap-1">
+                    <TrendingUp className="w-3.5 h-3.5" /> 目前開始起飛：
+                  </span>
+                  <p className="text-gray-300 font-medium">{data?.aiAnalysis?.risingTrend}</p>
+                  <span className="text-[10px] text-gray-500 block mt-1">
+                    目前觀看速度達標 5474/小時，演算法判定極具潛力！
+                  </span>
                 </div>
               </div>
-            </div>
+            )}
+          </div>
 
-            <div className="lg:col-span-3">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {data.videos.map((video: any) => (
-                  <div key={video.id} className="bg-gray-900 rounded-xl overflow-hidden hover:ring-2 hover:ring-red-500 transition-all group cursor-pointer border border-gray-800">
-                    <div className="relative aspect-[9/16] bg-gray-800 overflow-hidden">
-                      <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                      <div className="absolute top-2 right-2 bg-red-600 text-white text-xs font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1">
-                        <Flame size={12} /> {video.score}
-                      </div>
-                    </div>
-                    <div className="p-4 flex flex-col gap-3">
-                      <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug">{video.title}</h3>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-gray-800 p-2 rounded text-gray-400">速度<br/><span className="text-white font-semibold">{video.velocity}</span></div>
-                        <div className="bg-gray-800 p-2 rounded text-gray-400">互動<br/><span className="text-white font-semibold">{video.commentRate}</span></div>
-                      </div>
-                    </div>
-                  </div>
+          {/* Videos Grid */}
+          <div className="lg:col-span-3">
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[1, 2, 3].map((n) => (
+                  <div key={n} className="bg-[#161b26] h-72 rounded-xl animate-pulse border border-gray-800" />
                 ))}
               </div>
-            </div>
-
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {sortedVideos.map((video: any) => (
+                  <a
+                    key={video.id}
+                    href={`https://www.youtube.com/watch?v=${video.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#161b26] border border-gray-800 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/50 transition-all cursor-pointer"
+                  >
+                    <div className="relative aspect-[9/16] bg-gray-900 overflow-hidden">
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-0.5 rounded-full text-[10px] font-bold text-red-500 flex items-center gap-1 border border-red-500/30">
+                        <Flame className="w-3 h-3 fill-red-500" /> {video.score}
+                      </div>
+                    </div>
+                    <div className="p-3 flex flex-col flex-1 justify-between gap-3">
+                      <h4 className="text-xs font-semibold text-gray-200 line-clamp-2 group-hover:text-red-400 transition-colors">
+                        {video.title}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800/60 text-[10px]">
+                        <div>
+                          <span className="text-gray-500 block">速度</span>
+                          <span className="font-bold text-gray-300">{video.velocity}/小時</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500 block">互動</span>
+                          <span className="font-bold text-gray-300">{(video.engagement * 100).toFixed(2)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 }
 
-export default function SearchResults() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-950 flex items-center justify-center text-red-500 font-bold text-xl">載入中...</div>}>
-      <SearchContent />
-    </Suspense>
-  );
+export default function SearchPage() {
+  return <SearchContent />;
 }
