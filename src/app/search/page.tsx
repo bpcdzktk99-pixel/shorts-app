@@ -164,7 +164,7 @@ function SearchContent() {
                     href={`https://www.youtube.com/watch?v=${video.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#161b26] border border-gray-800 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/50 transition-all cursor-pointer"
+                    className="bg-[#161b26] border border-gray-800 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/50 transition-all cursor-pointer block"
                   >
                     <div className="relative aspect-[9/16] bg-gray-900 overflow-hidden">
                       <img
