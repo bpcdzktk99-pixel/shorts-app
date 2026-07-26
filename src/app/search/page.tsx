@@ -159,18 +159,18 @@ function SearchContent() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {sortedVideos.map((video: any) => (
-                  <div
+                  <a
                     key={video.id}
-                    onClick={() => {
-                      window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank");
-                    }}
-                    className="bg-[#161b26] border border-gray-800 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/50 transition-all cursor-pointer shadow-lg"
+                    href={`https://www.youtube.com/watch?v=${video.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#161b26] border border-gray-800 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/50 transition-all cursor-pointer block"
                   >
-                    <div className="relative aspect-[9/16] bg-gray-900 overflow-hidden">
+                    <div className="relative aspect-[9/16] bg-gray-900 overflow-hidden pointer-events-none">
                       <img
                         src={video.thumbnail}
                         alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-0.5 rounded-full text-[10px] font-bold text-red-500 flex items-center gap-1 border border-red-500/30">
                         <Flame className="w-3 h-3 fill-red-500" /> {video.score}
@@ -191,7 +191,7 @@ function SearchContent() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
