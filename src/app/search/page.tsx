@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Flame, TrendingUp, MessageCircle, Zap } from "lucide-react";
 
 function SearchContent() {
@@ -203,5 +203,9 @@ function SearchContent() {
 }
 
 export default function SearchPage() {
-  return <SearchContent />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0b0f19] text-white flex items-center justify-center">載入中...</div>}>
+      <SearchContent />
+    </Suspense>
+  );
 }
