@@ -2,14 +2,14 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { Flame, TrendingUp, MessageCircle, Zap } from "lucide-react";
+import { Flame, TrendingUp, Zap, BarChart2 } from "lucide-react";
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
 
   const [timeRange, setTimeRange] = useState("7d");
-  const [sortBy, setSortBy] = useState("velocity");
+  const [sortBy, setSortBy] = useState("views"); // 預設改為依觀看數排序
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,11 +27,12 @@ function SearchContent() {
       });
   }, [query, timeRange]);
 
+  // 更新排序邏輯，對應新的真實數據
   const sortedVideos = [...(data?.videos || [])].sort((a, b) => {
-    if (sortBy === "velocity") {
-      return b.velocity - a.velocity;
+    if (sortBy === "views") {
+      return (b.views || b.velocity || 0) - (a.views || a.velocity || 0);
     } else {
-      return b.engagement - a.engagement;
+      return (b.dailyAverage || 0) - (a.dailyAverage || 0);
     }
   });
 
@@ -64,8 +65,8 @@ function SearchContent() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-2 bg-[#161b26] p-1 rounded-lg border border-gray-800">
             {[
-              { id: "24h", label: "最近 24 小時" },
               { id: "7d", label: "最近 7 天" },
+              { id: "14d", label: "最近 14 天" },
               { id: "30d", label: "最近 30 天" },
             ].map((t) => (
               <button
@@ -84,8 +85,8 @@ function SearchContent() {
 
           <div className="flex items-center gap-2 bg-[#161b26] p-1 rounded-lg border border-gray-800">
             {[
-              { id: "velocity", label: "依觀看速度", icon: Zap },
-              { id: "engagement", label: "依互動率", icon: MessageCircle },
+              { id: "views", label: "依總觀看數", icon: Flame },
+              { id: "daily", label: "依單日平均", icon: BarChart2 },
             ].map((s) => {
               const Icon = s.icon;
               return (
@@ -109,18 +110,18 @@ function SearchContent() {
         {/* Content Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           {/* AI Analysis Sidebar */}
-          <div className="lg:col-span-1 bg-[#161b26] border border-gray-800 rounded-2xl p-5 flex flex-col gap-4 shadow-xl">
+          <div className="lg:col-span-1 bg-[#161b26] border border-gray-800 rounded-2xl p-5 flex flex-col gap-4 shadow-xl sticky top-24">
             <div className="flex items-center gap-2 text-red-500 font-semibold text-sm">
               <Flame className="w-4 h-4 fill-red-500" />
               AI 趨勢分析
             </div>
             {loading ? (
-              <div className="text-xs text-gray-400 animate-pulse">AI 正在深度解析演算法中...</div>
+              <div className="text-xs text-gray-400 animate-pulse">AI 正在抓取百萬觀看數據...</div>
             ) : (
               <div className="flex flex-col gap-4 text-xs">
                 <div>
                   <span className="text-gray-400 block mb-1">搜尋結果</span>
-                  <span className="font-bold text-sm text-white">共有 1,000,000 支持符合</span>
+                  <span className="font-bold text-sm text-white">所有影片皆突破百萬觀看</span>
                 </div>
                 <div className="border-t border-gray-800 pt-3">
                   <span className="text-red-400 font-semibold block mb-2 flex items-center gap-1">
@@ -130,7 +131,7 @@ function SearchContent() {
                     {data?.aiAnalysis?.topViral?.map((item: string, idx: number) => (
                       <li key={idx} className="flex justify-between items-center">
                         <span className="truncate pr-2">{idx + 1}. {item}</span>
-                        <span className="text-yellow-500">★★★★★</span>
+                        <span className="text-yellow-500 text-[10px]">★★★★★</span>
                       </li>
                     ))}
                   </ul>
@@ -140,9 +141,6 @@ function SearchContent() {
                     <TrendingUp className="w-3.5 h-3.5" /> 目前開始起飛：
                   </span>
                   <p className="text-gray-300 font-medium">{data?.aiAnalysis?.risingTrend}</p>
-                  <span className="text-[10px] text-gray-500 block mt-1">
-                    目前觀看速度達標 5474/小時，演算法判定極具潛力！
-                  </span>
                 </div>
               </div>
             )}
@@ -151,43 +149,58 @@ function SearchContent() {
           {/* Videos Grid */}
           <div className="lg:col-span-3">
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[1, 2, 3].map((n) => (
-                  <div key={n} className="bg-[#161b26] h-72 rounded-xl animate-pulse border border-gray-800" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  <div key={n} className="bg-[#161b26] h-80 rounded-xl animate-pulse border border-gray-800" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {sortedVideos.map((video: any) => (
                   <a
                     key={video.id}
                     href={`https://www.youtube.com/watch?v=${video.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#161b26] border border-gray-800 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/50 transition-all cursor-pointer block"
+                    className="bg-[#191f2e] border border-gray-700/50 rounded-xl overflow-hidden flex flex-col group hover:border-red-500/80 hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all cursor-pointer block"
                   >
-                    <div className="relative aspect-[9/16] bg-gray-900 overflow-hidden pointer-events-none">
+                    <div className="relative aspect-[9/16] bg-gray-900 overflow-hidden pointer-events-none border-b border-gray-800">
                       <img
                         src={video.thumbnail}
                         alt={video.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-2 right-2 bg-black/70 backdrop-blur px-2 py-0.5 rounded-full text-[10px] font-bold text-red-500 flex items-center gap-1 border border-red-500/30">
-                        <Flame className="w-3 h-3 fill-red-500" /> {video.score}
+                      <div className="absolute bottom-2 right-2 bg-black/80 px-1.5 py-0.5 rounded text-[10px] font-bold text-white">
+                        {video.duration || "未知"}
                       </div>
                     </div>
-                    <div className="p-3 flex flex-col flex-1 justify-between gap-3 pointer-events-none">
-                      <h4 className="text-xs font-semibold text-gray-200 line-clamp-2 group-hover:text-red-400 transition-colors">
+                    
+                    {/* 數據資訊區塊 */}
+                    <div className="p-3 flex flex-col flex-1 gap-2 pointer-events-none">
+                      <h4 className="text-xs font-semibold text-gray-100 line-clamp-2 group-hover:text-red-400 transition-colors h-8">
                         {video.title}
                       </h4>
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800/60 text-[10px]">
-                        <div>
-                          <span className="text-gray-500 block">速度</span>
-                          <span className="font-bold text-gray-300">{video.velocity}/小時</span>
+                      
+                      <div className="flex flex-col gap-1.5 text-[11px] text-gray-400 mt-1 bg-black/20 p-2 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1">🔥 觀看數:</span>
+                          <span className="font-bold text-white">{Number(video.views || video.velocity || 0).toLocaleString()}</span>
                         </div>
-                        <div>
-                          <span className="text-gray-500 block">互動</span>
-                          <span className="font-bold text-gray-300">{(video.engagement * 100).toFixed(2)}%</span>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1">📊 單日平均:</span>
+                          <span className="font-bold text-red-400">{Number(video.dailyAverage || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center gap-1">📅 發布:</span>
+                          <span className="text-gray-300">{video.publishedAt || "未知"}</span>
+                        </div>
+                        <div className="flex items-center justify-between truncate">
+                          <span className="flex items-center gap-1">👤 頻道:</span>
+                          <span className="text-blue-400 truncate max-w-[80px] text-right">{video.channel || "未知"}</span>
+                        </div>
+                        <div className="flex items-center justify-between truncate">
+                          <span className="flex items-center gap-1">🔍 關鍵字:</span>
+                          <span className="text-gray-400 truncate max-w-[80px] text-right">{video.keyword || query}</span>
                         </div>
                       </div>
                     </div>
